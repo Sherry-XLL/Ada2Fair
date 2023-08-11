@@ -54,9 +54,9 @@ To evaluate the two-sided fairness, **publishers in book domain**, **companies i
 ### Configuration files
 
 Parameter configurations consist of three parts/files: 
-- overall configuration ([[props/overall.yaml]])
-- dataset configuration (e.g., [[props/Book-Crossing.yaml]])
-- model configuration (e.g., [[props/BPR.yaml]])
+- overall configuration ([[overall.yaml]](props/overall.yaml))
+- dataset configuration (e.g., [[Book-Crossing.yaml]](props/Book-Crossing.yaml))
+- model configuration (e.g., [[BPR.yaml]](props/BPR.yaml))
 
 ### General configurations
 
