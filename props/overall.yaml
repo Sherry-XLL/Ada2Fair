@@ -1,0 +1,26 @@
+# dataset config
+gpu_id: 0
+state: INFO
+seed: 2022
+field_separator: "\t"
+data_path: 'dataset/'
+RATING_FIELD: rating
+TIME_FIELD: timestamp
+NEG_PREFIX: neg_
+LABEL_FIELD: label
+drop_filter_field: True
+
+metrics: ["Recall", "NDCG", "Hit", "P_Fair"]
+topk: [20]
+train_batch_size: 4096
+eval_batch_size: 40960000
+valid_metric: NDCG@20
+epochs: 1000
+stopping_step: 20
+learning_rate: 1e-3
+
+# fairness_type: ada2fair
+provider_eta: 2
+user_eta: 1
+delta: 1e-7
+weight_epochs: 10

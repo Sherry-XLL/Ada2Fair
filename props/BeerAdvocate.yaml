@@ -1,0 +1,13 @@
+# dataset config
+dataset: BeerAdvocate
+USER_ID_FIELD: user_id
+ITEM_ID_FIELD: item_id
+PRODIVER_ID_FIELD: brewer_id
+RATING_FIELD: overall
+load_col:
+  inter: [user_id, item_id, overall]
+  item: [item_id, brewer_id]
+user_inter_num_interval: "[5,inf)"
+item_inter_num_interval: "[5,inf)"
+val_interval:
+  overall: "[3,inf)"

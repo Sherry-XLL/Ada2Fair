@@ -1,0 +1,12 @@
+# dataset config
+dataset: Amazon_Video_Games
+USER_ID_FIELD: user_id
+ITEM_ID_FIELD: item_id
+PRODIVER_ID_FIELD: brand
+load_col:
+  inter: [user_id, item_id, rating]
+  item: [item_id, brand]
+user_inter_num_interval: "[5,inf)"
+item_inter_num_interval: "[5,inf)"
+val_interval:
+  rating: "[3,inf)"

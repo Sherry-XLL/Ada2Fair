@@ -1,0 +1,9 @@
+embedding_size: 64
+dropout_prob: 0.5
+encoder_layers: [32]
+encoder_activations: ["tanh", "sigmoid"]
+decoder_layers_pfair: [16]
+decoder_activations_pfair: ["tanh"]
+decoder_layers_ufair: [16]
+decoder_activations_ufair: ["tanh"]
+alpha: 0.3

@@ -1,0 +1,12 @@
+# dataset config
+dataset: Book-Crossing
+USER_ID_FIELD: user_id
+ITEM_ID_FIELD: ISBN
+PRODIVER_ID_FIELD: publisher
+load_col:
+  inter: [user_id, ISBN, rating]
+  item: [ISBN, publisher]
+user_inter_num_interval: "[5,inf)"
+item_inter_num_interval: "[5,inf)"
+val_interval:
+  rating: "[5,inf)"
