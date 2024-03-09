@@ -2,7 +2,7 @@
 
 **Ada2Fair** aims to promote two-sided fairness with adaptive weights for providers and customers in recommendation.
 
-This repository is the official implementation of our paper under review (WSDM'24).
+This repository is the official implementation of our paper under review.
 
 The implementation of Ada2Fair is based on PyTorch and RecBole.
 
