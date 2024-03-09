@@ -1,3 +1,3 @@
 pytorch==1.11.0
 cudatoolkit==11.3.1
-recbole==1.1.1
+recbole==1.2.0

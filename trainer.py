@@ -101,7 +101,7 @@ class Trainer(RecBole_Trainer):
         )
         return total_loss
 
-    def get_provider_fairness_weight(self, item_provider):
+    def get_fairness_weight(self, item_provider, used_ids):
         # get the user scores of all items
         interaction = {}
         interaction["user_id"] = torch.arange(1, self.model.n_users).to(
@@ -122,17 +122,16 @@ class Trainer(RecBole_Trainer):
         item_cnt = len(item_provider)
 
         exposure_score = np.zeros(item_cnt)
-        up_exposure_score = np.zeros((user_num, np.max(item_provider) + 1))
+        user_utility = np.zeros(user_num)
 
         for idx, rec_u in enumerate(item_matrix):
+            history_item_id = set(used_ids[idx + 1])
             for i in range(k):
                 exposure_score[rec_u[i]] += score[i]
-                up_exposure_score[idx, item_provider[rec_u[i]]] += score[i]
-
-        ui_exposure_score = up_exposure_score[
-            np.expand_dims(np.arange(user_num), 1).repeat(item_cnt, axis=1),
-            np.expand_dims(item_provider, 0).repeat(user_num, axis=0),
-        ]
+                if rec_u[i] in history_item_id:
+                    user_utility[idx] += score[i]
+            if history_item_id:
+                user_utility[idx] = user_utility[idx] / len(history_item_id)
 
         # count item num of each provider
         provider_cnt = np.max(item_provider) + 1
@@ -147,16 +146,22 @@ class Trainer(RecBole_Trainer):
         provider_exposure_score = provider_exposure_score.sum(0)
         provider_exposure_score = provider_exposure_score / provider_num_items
 
+        # estimate provider-side exposure score
         provider_exposure_score = pow(
             provider_exposure_score, self.config["provider_eta"]
         )
         provider_exposure_score = 1 / (provider_exposure_score + self.config["delta"])
-        # provider_exposure_score = provider_exposure_score.max() - provider_exposure_score
         provider_fairness_weight = provider_exposure_score[item_provider]
         provider_fairness_weight = torch.tensor(provider_fairness_weight).to(
             self.model.device
         )
-        return provider_fairness_weight, ui_exposure_score
+
+        # estimate customer-side utility score
+        user_utility = pow(user_utility, self.config["user_eta"])
+        user_utility = 1 / (user_utility + self.config["delta"])
+        user_utility = np.concatenate((np.zeros(1), user_utility))
+        user_utility = torch.tensor(user_utility).to(self.model.device)
+        return provider_fairness_weight, user_utility
 
     def fit(
         self,
@@ -215,36 +220,13 @@ class Trainer(RecBole_Trainer):
                 item_provider = train_data.dataset.get_item_feature()[
                     self.config["PRODIVER_ID_FIELD"]
                 ].numpy()
+                used_ids = train_data._sampler.get_used_ids()["train"]
                 (
                     provider_fairness_weight,
-                    ui_exposure_score,
-                ) = self.get_provider_fairness_weight(item_provider)
-                user_fairness_weight = (
-                    np.concatenate(
-                        [
-                            np.ones((1, ui_exposure_score.shape[1])),
-                            1
-                            / (
-                                pow(ui_exposure_score, self.config["user_eta"])
-                                + self.config["delta"]
-                            ),
-                        ],
-                        axis=0,
-                    )
-                ) * self.model.rating_matrix.cpu().numpy()
-                user_fairness_weight = torch.tensor(
-                    user_fairness_weight
-                    / (
-                        user_fairness_weight.sum(axis=1, keepdims=True)
-                        + self.config["delta"]
-                    ).repeat(
-                        train_data.dataset.num(self.config["ITEM_ID_FIELD"]), axis=1
-                    )
-                    * np.expand_dims(user_popularity, axis=1).repeat(
-                        train_data.dataset.num(self.config["ITEM_ID_FIELD"]), axis=1
-                    )
-                ).to(self.device)
+                    user_fairness_weight,
+                ) = self.get_fairness_weight(item_provider, used_ids)
 
+                # weight normalization
                 provider_fairness_weight[0] = 0
                 provider_fairness_weight_sum = provider_fairness_weight[
                     train_data.dataset.inter_feat[self.config["ITEM_ID_FIELD"]]
@@ -256,6 +238,20 @@ class Trainer(RecBole_Trainer):
                     / provider_fairness_weight_sum
                     * len(train_data.dataset)
                 )
+
+                user_fairness_weight[0] = 0
+                user_fairness_weight_sum = user_fairness_weight[
+                    train_data.dataset.inter_feat[self.config["USER_ID_FIELD"]]
+                    .cpu()
+                    .numpy()
+                ].sum()
+                user_fairness_weight = (
+                    user_fairness_weight
+                    / user_fairness_weight_sum
+                    * len(train_data.dataset)
+                )
+
+                # weight update for iterative models
                 self.model.fairness_weight = (
                     provider_fairness_weight,
                     user_fairness_weight,
@@ -264,6 +260,7 @@ class Trainer(RecBole_Trainer):
                 weight_data = UserDataLoader(
                     self.config, train_data.dataset, train_data.sampler, shuffle=True
                 )
+                # Two-sided fairness aware weight generation
                 for weight_epoch_idx in range(self.config["weight_epochs"]):
                     weight_loss = self.train_weight_epoch(
                         weight_epoch_idx, weight_data, show_progress=show_progress

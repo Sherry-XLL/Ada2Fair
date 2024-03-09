@@ -24,6 +24,7 @@ class SGL(GeneralRecommender):
 
     We implement the model following the original author with a pairwise training mode.
     """
+
     input_type = InputType.PAIRWISE
 
     def __init__(self, config, dataset):
@@ -108,6 +109,7 @@ class SGL(GeneralRecommender):
         return h_encode
 
     def weight_loss(self, interaction):
+        # Stage I: two-sided fairness aware weight generation
         user = interaction[self.USER_ID]
         provider_fairness, user_fairness = self.fairness_weight
         rating_matrix = self.rating_matrix[user]
@@ -115,15 +117,29 @@ class SGL(GeneralRecommender):
         h_encode = h_encode * rating_matrix
         h_encode_pfair = self.decoder_pfair(h_encode)
         h_encode_ufair = self.decoder_ufair(h_encode)
+
+        # loss for provider-side fairness
         target_pfair = self.decoder_pfair(
             (
                 (provider_fairness.unsqueeze(dim=0).repeat(user.size(0), 1))
                 * rating_matrix
             ).float()
         )
-        target_ufair = self.decoder_ufair((user_fairness[user] * rating_matrix).float())
         loss_pfair = self.loss_func(h_encode_pfair, target_pfair)
+
+        # loss for customer-side fairness
+        target_ufair = self.decoder_ufair(
+            (
+                (
+                    user_fairness[user]
+                    .unsqueeze(dim=1)
+                    .repeat(1, provider_fairness.size(0))
+                )
+                * rating_matrix
+            ).float()
+        )
         loss_ufair = self.loss_func(h_encode_ufair, target_ufair)
+
         return loss_pfair * (1 - self.alpha), loss_ufair * self.alpha
 
     def graph_construction(self):
