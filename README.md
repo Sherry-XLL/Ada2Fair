@@ -1,14 +1,10 @@
-# Ada2Fair
+# [RecSys 2024 short] Promoting Two-sided Fairness with Adaptive Weights for Providers and Customers in Recommendation
 
 **Ada2Fair** aims to promote two-sided fairness with adaptive weights for providers and customers in recommendation.
 
-This repository is the official implementation of our paper under review.
+> Lanling Xu, Zihan Lin, Jinpeng Wang, Sheng Chen, Wayne Xin Zhao and Ji-Rong Wen. Promoting Two-sided Fairness with Adaptive Weights for Providers and Customers in Recommendation. RecSys 2024 Short Paper.
 
-The implementation of Ada2Fair is based on PyTorch and RecBole.
-
-## ⚖️ Ada2Fair: Two-sided fairness-aware training framework
-
-![](assets/model.png)
+![](model.png)
 
 Ada2Fair involves two stages: how to generate weights in stage I and and how to utilize weights in stage II. The former generates weights as a prerequisite for the latter, while the latter utilizes weights as our core objective.
 
@@ -81,8 +77,17 @@ For Ada2Fair, the hidden size $d_1$ of $\mathcal{G}$ is set to 32 and the hidden
 
 ## 🌟 Acknowledgement
 
-- This anonymous library includes the dataset and implementation details of Ada2Fair.
-- It is provided for reference by reviewers during the anonymous stage.
-- If the paper is fortunate enough to be accepted, we will also make datasets and code public to enhance reproducibility.
-- If you have any questions, please feel free to give me your advice.
-- Thanks for your reading and guidance.
+Please cite the following paper if you find our code helpful.
+
+```bibtex
+@inproceedings{xu2024ada2fair,
+  author    = {Lanling Xu and Zihan Lin and Jinpeng Wang and Sheng Chen and Wayne Xin Zhao and Ji-Rong Wen},
+  title     = {Promoting Two-sided Fairness with Adaptive Weights for Providers and Customers in Recommendation},
+  booktitle = {{RecSys}},
+  publisher = {{ACM}},
+  year      = {2024}
+}
+```
+
+- The experiments are conducted using the open-source recommendation library [RecBole](https://github.com/RUCAIBox/RecBole).
+- Thanks for your reading and guidance. If you have any questions, please feel free to give me your advice.
